@@ -23,8 +23,11 @@ probe -ip 4
 # 强制使用 IPv6 协议
 probe -ip 6
 
-# 使用代理（仅限SOCKS5 UDP协议）
+# 使用代理（SOCKS5 UDP协议）
 probe -s5 127.0.0.1:54321
+
+# 使用自定义探测服务器（STUN协议）
+probe -s1 stun.miwifi.com:3478
 ```
 
 # 授权协议
