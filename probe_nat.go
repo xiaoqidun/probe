@@ -259,7 +259,18 @@ func DetectNAT(conn net.PacketConn, primarySTUN, secondarySTUN, network string, 
 	respF1, addrF1, _ := performTest(conn, primarySTUN, network, timeout, true, true)
 	if respF1 != nil {
 		if dst, err := resolveAddr(conn, primarySTUN, network); err == nil {
-			if sAddr, ok := dst.(*net.UDPAddr); ok && addrF1 != nil && sAddr.IP.Equal(addrF1.IP) {
+			var checkIP net.IP
+			var checkPort int
+			if sAddr, ok := dst.(*net.UDPAddr); ok {
+				checkIP = sAddr.IP
+				checkPort = sAddr.Port
+			} else if sAddr, ok := dst.(*SocksAddr); ok {
+				if ipAddr, err := net.ResolveIPAddr("ip", sAddr.Host); err == nil {
+					checkIP = ipAddr.IP
+					checkPort = sAddr.Port
+				}
+			}
+			if checkIP != nil && addrF1 != nil && checkIP.Equal(addrF1.IP) && addrF1.Port == checkPort {
 				respF1 = nil
 			}
 		}
@@ -270,7 +281,13 @@ func DetectNAT(conn net.PacketConn, primarySTUN, secondarySTUN, network string, 
 		respF2, addrF2, _ := performTest(conn, primarySTUN, network, timeout, false, true)
 		if respF2 != nil {
 			if dst, err := resolveAddr(conn, primarySTUN, network); err == nil {
-				if sAddr, ok := dst.(*net.UDPAddr); ok && addrF2 != nil && sAddr.Port == addrF2.Port {
+				var checkPort int
+				if sAddr, ok := dst.(*net.UDPAddr); ok {
+					checkPort = sAddr.Port
+				} else if sAddr, ok := dst.(*SocksAddr); ok {
+					checkPort = sAddr.Port
+				}
+				if checkPort != 0 && addrF2 != nil && checkPort == addrF2.Port {
 					respF2 = nil
 				}
 			}
