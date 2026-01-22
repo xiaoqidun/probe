@@ -110,10 +110,10 @@ func performTest(conn net.PacketConn, serverAddr string, network string, timeout
 	if _, err := conn.WriteTo(req, dst); err != nil {
 		return nil, nil, err
 	}
-	conn.SetReadDeadline(time.Now().Add(timeout))
 	defer conn.SetReadDeadline(time.Time{})
 	buf := make([]byte, 2048)
 	for i := 0; i < 3; i++ {
+		conn.SetReadDeadline(time.Now().Add(timeout))
 		n, addr, err := conn.ReadFrom(buf)
 		if err != nil {
 			if nerr, ok := err.(net.Error); ok && nerr.Timeout() {
