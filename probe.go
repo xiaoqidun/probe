@@ -52,7 +52,7 @@ func main() {
 	var err error
 	if s5 != "" {
 		fmt.Printf("通过代理探测: %s\n", s5)
-		conn, err = DialSocks5UDP(s5)
+		conn, err = DialSocks5UDP(s5, network)
 		if err != nil {
 			fmt.Printf("连接代理失败: %v\n", err)
 			return

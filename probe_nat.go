@@ -149,6 +149,14 @@ func DetectNAT(conn net.PacketConn, primarySTUN, secondarySTUN, network string, 
 		return res
 	}
 	res.MappedIP = mappedAddr1.String()
+	if localAddr, ok := conn.LocalAddr().(*net.UDPAddr); ok {
+		if localAddr.IP.Equal(mappedAddr1.IP) && localAddr.Port == mappedAddr1.Port {
+			res.Type = NATOpen
+			res.Mapping = MappingEndpointIndependent
+			res.Filtering = FilteringEndpointIndependent
+			return res
+		}
+	}
 	var targetSTUN2 string
 	if secondarySTUN != "" {
 		targetSTUN2 = secondarySTUN
@@ -160,7 +168,10 @@ func DetectNAT(conn net.PacketConn, primarySTUN, secondarySTUN, network string, 
 			host, port, _ := net.SplitHostPort(primarySTUN)
 			ips, err := net.LookupIP(host)
 			if err == nil && len(ips) > 1 {
-				primaryIP, _ := net.ResolveIPAddr("ip", host)
+				primaryIP, err := net.ResolveIPAddr("ip", host)
+				if err != nil {
+					return res
+				}
 				wantIPv4 := network == "udp4"
 				wantIPv6 := network == "udp6"
 				if network == "udp" {
