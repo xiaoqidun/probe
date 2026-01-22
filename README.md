@@ -27,7 +27,7 @@ probe -ip 6
 probe -s5 127.0.0.1:54321
 
 # 使用自定义服务器（STUN协议）
-probe -s1 stun.voipia.net:3478
+probe -s1 stun.hot-chilli.net:3478
 ```
 
 # 授权协议

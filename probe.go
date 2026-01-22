@@ -31,7 +31,7 @@ func main() {
 		to time.Duration
 	)
 	flag.StringVar(&ip, "ip", "", "协议版本")
-	flag.StringVar(&s1, "s1", "stun.l.google.com:19302", "主服务器")
+	flag.StringVar(&s1, "s1", "stun.nextcloud.com:3478", "主服务器")
 	flag.StringVar(&s2, "s2", "", "次服务器")
 	flag.StringVar(&s5, "s5", "", "代理地址")
 	flag.DurationVar(&to, "to", 10*time.Second, "超时时间")
