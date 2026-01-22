@@ -34,7 +34,7 @@ func main() {
 	flag.StringVar(&s1, "s1", "stun.l.google.com:19302", "主服务器")
 	flag.StringVar(&s2, "s2", "", "次服务器")
 	flag.StringVar(&s5, "s5", "", "代理地址")
-	flag.DurationVar(&to, "to", 5*time.Second, "超时时间")
+	flag.DurationVar(&to, "to", 10*time.Second, "超时时间")
 	flag.Parse()
 	network := "udp"
 	switch ip {
