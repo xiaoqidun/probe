@@ -195,28 +195,49 @@ func DetectNAT(conn net.PacketConn, primarySTUN, secondarySTUN, network string, 
 			}
 		}
 	}
-	var mappedAddr3 *net.UDPAddr
+	var mappedAddr2 *net.UDPAddr
 	if targetSTUN2 != "" {
-		resp3, _, err := performTest(conn, targetSTUN2, network, timeout, false, false)
-		if err == nil && resp3 != nil {
-			mappedAddr3 = resp3.GetMappedAddress()
+		resp2, _, err := performTest(conn, targetSTUN2, network, timeout, false, false)
+		if err == nil && resp2 != nil {
+			mappedAddr2 = resp2.GetMappedAddress()
 		}
 	}
-	if mappedAddr3 != nil {
-		if mappedAddr1.String() == mappedAddr3.String() {
-			res.Mapping = MappingEndpointIndependent
-		} else {
-			res.Mapping = MappingAddressPortDependent
-		}
-	} else {
+	if mappedAddr2 == nil {
 		res.Mapping = MappingUnknown
+	} else if mappedAddr1.String() == mappedAddr2.String() {
+		res.Mapping = MappingEndpointIndependent
+	} else {
+		res.Mapping = MappingAddressPortDependent
+		changedAddr := resp1.GetChangedAddress()
+		if changedAddr != nil {
+			host, _, _ := net.SplitHostPort(primarySTUN)
+			primaryIP := net.ParseIP(host)
+			if primaryIP == nil {
+				if ipAddr, err := net.ResolveIPAddr("ip", host); err == nil {
+					primaryIP = ipAddr.IP
+				}
+			}
+			if primaryIP != nil && changedAddr.Port != 0 {
+				altPortSTUN := net.JoinHostPort(primaryIP.String(), strconv.Itoa(changedAddr.Port))
+				if altPortSTUN != primarySTUN {
+					resp3, _, err := performTest(conn, altPortSTUN, network, timeout, false, false)
+					if err == nil && resp3 != nil {
+						if mappedAddr3 := resp3.GetMappedAddress(); mappedAddr3 != nil {
+							if mappedAddr1.String() == mappedAddr3.String() {
+								res.Mapping = MappingAddressDependent
+							}
+						}
+					}
+				}
+			}
+		}
 	}
-	resp2, _, _ := performTest(conn, primarySTUN, network, timeout, true, true)
-	if resp2 != nil {
+	respF1, _, _ := performTest(conn, primarySTUN, network, timeout, true, true)
+	if respF1 != nil {
 		res.Filtering = FilteringEndpointIndependent
 	} else {
-		resp4, _, _ := performTest(conn, primarySTUN, network, timeout, false, true)
-		if resp4 != nil {
+		respF2, _, _ := performTest(conn, primarySTUN, network, timeout, false, true)
+		if respF2 != nil {
 			res.Filtering = FilteringAddressDependent
 		} else {
 			res.Filtering = FilteringAddressPortDependent
