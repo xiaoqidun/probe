@@ -42,10 +42,9 @@ func (a *SocksAddr) String() string { return net.JoinHostPort(a.Host, strconv.It
 
 // socks5PacketConn SOCKS5数据包连接实现
 type socks5PacketConn struct {
-	tcpConn    net.Conn
-	udpConn    *net.UDPConn
-	relayAddr  *net.UDPAddr
-	targetAddr net.Addr
+	tcpConn   net.Conn
+	udpConn   *net.UDPConn
+	relayAddr *net.UDPAddr
 }
 
 // ReadFrom 从UDP连接读取数据
@@ -65,9 +64,6 @@ func (c *socks5PacketConn) ReadFrom(p []byte) (n int, addr net.Addr, err error) 
 	var dataOffset int
 	switch atyp {
 	case 0x01:
-		if n < 10 {
-			return 0, nil, errors.New("short packet")
-		}
 		ip := net.IP(buf[4:8])
 		port := binary.BigEndian.Uint16(buf[8:10])
 		rAddr = &net.UDPAddr{IP: ip, Port: int(port)}
@@ -96,8 +92,8 @@ func (c *socks5PacketConn) ReadFrom(p []byte) (n int, addr net.Addr, err error) 
 	default:
 		return 0, nil, fmt.Errorf("unknown address type: 0x%x", atyp)
 	}
-	copy(p, buf[dataOffset:n])
-	return n - dataOffset, rAddr, nil
+	copied := copy(p, buf[dataOffset:n])
+	return copied, rAddr, nil
 }
 
 // WriteTo 写入数据到目标地址
