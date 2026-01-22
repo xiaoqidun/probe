@@ -149,12 +149,14 @@ func DetectNAT(conn net.PacketConn, primarySTUN, secondarySTUN, network string, 
 		return res
 	}
 	res.MappedIP = mappedAddr1.String()
-	if localAddr, ok := conn.LocalAddr().(*net.UDPAddr); ok {
-		if localAddr.IP.Equal(mappedAddr1.IP) && localAddr.Port == mappedAddr1.Port {
-			res.Type = NATOpen
-			res.Mapping = MappingEndpointIndependent
-			res.Filtering = FilteringEndpointIndependent
-			return res
+	if _, isSocks5 := conn.(*socks5PacketConn); !isSocks5 {
+		if localAddr, ok := conn.LocalAddr().(*net.UDPAddr); ok {
+			if localAddr.IP.Equal(mappedAddr1.IP) && localAddr.Port == mappedAddr1.Port {
+				res.Type = NATOpen
+				res.Mapping = MappingEndpointIndependent
+				res.Filtering = FilteringEndpointIndependent
+				return res
+			}
 		}
 	}
 	var targetSTUN2 string
