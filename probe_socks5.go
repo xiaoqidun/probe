@@ -204,6 +204,7 @@ func DialSocks5UDP(proxyAddr, network string, timeout time.Duration) (net.Packet
 	if err != nil {
 		return nil, err
 	}
+	conn.SetDeadline(time.Now().Add(timeout))
 	_, err = conn.Write([]byte{0x05, 0x01, 0x00})
 	if err != nil {
 		conn.Close()
@@ -266,6 +267,9 @@ func DialSocks5UDP(proxyAddr, network string, timeout time.Duration) (net.Packet
 			return nil, err
 		}
 		relayIP = net.IP(b)
+	default:
+		conn.Close()
+		return nil, fmt.Errorf("unsupported address type: 0x%x", header[3])
 	}
 	pb := make([]byte, 2)
 	if _, err := io.ReadFull(conn, pb); err != nil {
@@ -278,6 +282,7 @@ func DialSocks5UDP(proxyAddr, network string, timeout time.Duration) (net.Packet
 			relayIP = remoteAddr.IP
 		}
 	}
+	conn.SetDeadline(time.Time{})
 	relayAddr := &net.UDPAddr{IP: relayIP, Port: relayPort}
 	lConn, err := net.ListenUDP(network, nil)
 	if err != nil {
