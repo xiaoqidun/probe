@@ -176,9 +176,9 @@ func (c *socks5PacketConn) SetWriteDeadline(t time.Time) error {
 }
 
 // DialSocks5UDP 建立SOCKS5 UDP关联
-// 入参: proxyAddr 代理服务器地址, network 网络协议(udp/udp4/udp6), timeout 超时时间
+// 入参: proxyAddr 代理服务器地址, timeout 超时时间
 // 返回: conn 数据包连接, err 连接错误
-func DialSocks5UDP(proxyAddr, network string, timeout time.Duration) (net.PacketConn, error) {
+func DialSocks5UDP(proxyAddr string, timeout time.Duration) (net.PacketConn, error) {
 	var host string
 	if strings.Contains(proxyAddr, "://") {
 		u, err := url.Parse(proxyAddr)
@@ -189,14 +189,7 @@ func DialSocks5UDP(proxyAddr, network string, timeout time.Duration) (net.Packet
 	} else {
 		host = proxyAddr
 	}
-	tcpNetwork := "tcp"
-	switch network {
-	case "udp4":
-		tcpNetwork = "tcp4"
-	case "udp6":
-		tcpNetwork = "tcp6"
-	}
-	conn, err := net.DialTimeout(tcpNetwork, host, timeout)
+	conn, err := net.DialTimeout("tcp", host, timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +273,13 @@ func DialSocks5UDP(proxyAddr, network string, timeout time.Duration) (net.Packet
 	}
 	conn.SetDeadline(time.Time{})
 	relayAddr := &net.UDPAddr{IP: relayIP, Port: relayPort}
-	lConn, err := net.ListenUDP(network, nil)
+	listenNetwork := "udp"
+	if relayIP.To4() != nil {
+		listenNetwork = "udp4"
+	} else {
+		listenNetwork = "udp6"
+	}
+	lConn, err := net.ListenUDP(listenNetwork, nil)
 	if err != nil {
 		conn.Close()
 		return nil, err
