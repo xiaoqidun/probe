@@ -58,7 +58,7 @@ func (c *socks5PacketConn) ReadFrom(p []byte) (n int, addr net.Addr, err error) 
 		return 0, nil, err
 	}
 	if n < 10 {
-		return 0, nil, nil
+		return 0, nil, errors.New("packet too short")
 	}
 	atyp := buf[3]
 	var rAddr *net.UDPAddr
