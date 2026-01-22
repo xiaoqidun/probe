@@ -74,6 +74,24 @@ type NATResult struct {
 	MappedIP  string
 }
 
+// isLocalIP 判断IP是否为本地IP
+// 入参: ip 待判断IP
+// 返回: bool 是否为本地IP
+func isLocalIP(ip net.IP) bool {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return false
+	}
+	for _, addr := range addrs {
+		if ipNet, ok := addr.(*net.IPNet); ok {
+			if ipNet.IP.Equal(ip) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // resolveAddr 解析探测目标地址
 // 入参: conn 当前连接, addrStr 目标地址字符串, network 网络协议
 // 返回: addr 解析后的网络地址, err 解析错误
@@ -151,7 +169,11 @@ func DetectNAT(conn net.PacketConn, primarySTUN, secondarySTUN, network string, 
 	res.MappedIP = mappedAddr1.String()
 	if _, isSocks5 := conn.(*socks5PacketConn); !isSocks5 {
 		if localAddr, ok := conn.LocalAddr().(*net.UDPAddr); ok {
-			if localAddr.IP.Equal(mappedAddr1.IP) && localAddr.Port == mappedAddr1.Port {
+			isLocal := localAddr.IP.Equal(mappedAddr1.IP)
+			if !isLocal && localAddr.IP.IsUnspecified() {
+				isLocal = isLocalIP(mappedAddr1.IP)
+			}
+			if isLocal && localAddr.Port == mappedAddr1.Port {
 				res.Type = NATOpen
 				res.Mapping = MappingEndpointIndependent
 				res.Filtering = FilteringEndpointIndependent
