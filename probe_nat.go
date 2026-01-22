@@ -256,11 +256,25 @@ func DetectNAT(conn net.PacketConn, primarySTUN, secondarySTUN, network string, 
 			}
 		}
 	}
-	respF1, _, _ := performTest(conn, primarySTUN, network, timeout, true, true)
+	respF1, addrF1, _ := performTest(conn, primarySTUN, network, timeout, true, true)
+	if respF1 != nil {
+		if dst, err := resolveAddr(conn, primarySTUN, network); err == nil {
+			if sAddr, ok := dst.(*net.UDPAddr); ok && addrF1 != nil && sAddr.IP.Equal(addrF1.IP) {
+				respF1 = nil
+			}
+		}
+	}
 	if respF1 != nil {
 		res.Filtering = FilteringEndpointIndependent
 	} else {
-		respF2, _, _ := performTest(conn, primarySTUN, network, timeout, false, true)
+		respF2, addrF2, _ := performTest(conn, primarySTUN, network, timeout, false, true)
+		if respF2 != nil {
+			if dst, err := resolveAddr(conn, primarySTUN, network); err == nil {
+				if sAddr, ok := dst.(*net.UDPAddr); ok && addrF2 != nil && sAddr.Port == addrF2.Port {
+					respF2 = nil
+				}
+			}
+		}
 		if respF2 != nil {
 			res.Filtering = FilteringAddressDependent
 		} else {
