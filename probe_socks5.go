@@ -180,9 +180,9 @@ func (c *socks5PacketConn) SetWriteDeadline(t time.Time) error {
 }
 
 // DialSocks5UDP 建立SOCKS5 UDP关联
-// 入参: proxyAddr 代理服务器地址, network 网络协议(udp/udp4/udp6)
+// 入参: proxyAddr 代理服务器地址, network 网络协议(udp/udp4/udp6), timeout 超时时间
 // 返回: conn 数据包连接, err 连接错误
-func DialSocks5UDP(proxyAddr, network string) (net.PacketConn, error) {
+func DialSocks5UDP(proxyAddr, network string, timeout time.Duration) (net.PacketConn, error) {
 	var host string
 	if strings.Contains(proxyAddr, "://") {
 		u, err := url.Parse(proxyAddr)
@@ -200,7 +200,7 @@ func DialSocks5UDP(proxyAddr, network string) (net.PacketConn, error) {
 	case "udp6":
 		tcpNetwork = "tcp6"
 	}
-	conn, err := net.DialTimeout(tcpNetwork, host, 5*time.Second)
+	conn, err := net.DialTimeout(tcpNetwork, host, timeout)
 	if err != nil {
 		return nil, err
 	}

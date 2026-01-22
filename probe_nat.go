@@ -204,7 +204,7 @@ func DetectNAT(conn net.PacketConn, primarySTUN, secondarySTUN, network string, 
 	}
 	if mappedAddr2 == nil {
 		res.Mapping = MappingUnknown
-	} else if mappedAddr1.String() == mappedAddr2.String() {
+	} else if mappedAddr1.IP.Equal(mappedAddr2.IP) && mappedAddr1.Port == mappedAddr2.Port {
 		res.Mapping = MappingEndpointIndependent
 	} else {
 		res.Mapping = MappingAddressPortDependent
@@ -223,7 +223,7 @@ func DetectNAT(conn net.PacketConn, primarySTUN, secondarySTUN, network string, 
 					resp3, _, err := performTest(conn, altPortSTUN, network, timeout, false, false)
 					if err == nil && resp3 != nil {
 						if mappedAddr3 := resp3.GetMappedAddress(); mappedAddr3 != nil {
-							if mappedAddr1.String() == mappedAddr3.String() {
+							if mappedAddr1.IP.Equal(mappedAddr3.IP) && mappedAddr1.Port == mappedAddr3.Port {
 								res.Mapping = MappingAddressDependent
 							}
 						}
