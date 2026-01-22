@@ -105,7 +105,7 @@ func resolveAddr(conn net.PacketConn, addrStr, network string) (net.Addr, error)
 		return nil, err
 	}
 	if _, ok := conn.(*socks5PacketConn); ok && network == "udp" {
-		if net.ParseIP(host) == nil && host != "localhost" && host != "127.0.0.1" {
+		if net.ParseIP(host) == nil {
 			return &SocksAddr{Host: host, Port: port}, nil
 		}
 	}
