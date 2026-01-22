@@ -136,9 +136,9 @@ func decodeSTUNResponse(data []byte, txID [12]byte) (*stunMessage, error) {
 }
 
 // parseAddress 解析STUN属性中的地址信息
-// 入参: attrType 属性类型, data 属性值数据
+// 入参: attrType 属性类型, data 属性值数据, txID 事务ID用于XOR解码
 // 返回: addr 解析出的UDP地址, err 解析错误信息
-func parseAddress(attrType uint16, data []byte) (*net.UDPAddr, error) {
+func parseAddress(attrType uint16, data []byte, txID [12]byte) (*net.UDPAddr, error) {
 	if len(data) < 4 {
 		return nil, errors.New("attribute too short")
 	}
@@ -157,11 +157,14 @@ func parseAddress(attrType uint16, data []byte) (*net.UDPAddr, error) {
 	copy(ip, data[4:4+ipLen])
 	if attrType == attrXorMappedAddress {
 		port ^= uint16(stunMagicCookie >> 16)
-		if ipLen == 4 {
-			mc := make([]byte, 4)
-			binary.BigEndian.PutUint32(mc, stunMagicCookie)
-			for i := 0; i < 4; i++ {
-				ip[i] ^= mc[i]
+		mc := make([]byte, 4)
+		binary.BigEndian.PutUint32(mc, stunMagicCookie)
+		for i := 0; i < 4; i++ {
+			ip[i] ^= mc[i]
+		}
+		if ipLen == 16 {
+			for i := 4; i < 16; i++ {
+				ip[i] ^= txID[i-4]
 			}
 		}
 	}
@@ -173,14 +176,14 @@ func parseAddress(attrType uint16, data []byte) (*net.UDPAddr, error) {
 func (m *stunMessage) GetMappedAddress() *net.UDPAddr {
 	for _, attr := range m.Attributes {
 		if attr.Type == attrXorMappedAddress {
-			if addr, err := parseAddress(attr.Type, attr.Value); err == nil {
+			if addr, err := parseAddress(attr.Type, attr.Value, m.Header.ID); err == nil {
 				return addr
 			}
 		}
 	}
 	for _, attr := range m.Attributes {
 		if attr.Type == attrMappedAddress {
-			if addr, err := parseAddress(attr.Type, attr.Value); err == nil {
+			if addr, err := parseAddress(attr.Type, attr.Value, m.Header.ID); err == nil {
 				return addr
 			}
 		}
@@ -193,14 +196,14 @@ func (m *stunMessage) GetMappedAddress() *net.UDPAddr {
 func (m *stunMessage) GetChangedAddress() *net.UDPAddr {
 	for _, attr := range m.Attributes {
 		if attr.Type == attrChangedAddress {
-			if addr, err := parseAddress(attr.Type, attr.Value); err == nil {
+			if addr, err := parseAddress(attr.Type, attr.Value, m.Header.ID); err == nil {
 				return addr
 			}
 		}
 	}
 	for _, attr := range m.Attributes {
 		if attr.Type == attrOtherAddress {
-			if addr, err := parseAddress(attr.Type, attr.Value); err == nil {
+			if addr, err := parseAddress(attr.Type, attr.Value, m.Header.ID); err == nil {
 				return addr
 			}
 		}

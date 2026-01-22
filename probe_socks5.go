@@ -93,6 +93,8 @@ func (c *socks5PacketConn) ReadFrom(p []byte) (n int, addr net.Addr, err error) 
 		port := binary.BigEndian.Uint16(buf[20:22])
 		rAddr = &net.UDPAddr{IP: ip, Port: int(port)}
 		dataOffset = 22
+	default:
+		return 0, nil, fmt.Errorf("unknown address type: 0x%x", atyp)
 	}
 	copy(p, buf[dataOffset:n])
 	return n - dataOffset, rAddr, nil
@@ -142,8 +144,12 @@ func (c *socks5PacketConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
 // Close 关闭连接
 // 返回: err 关闭错误
 func (c *socks5PacketConn) Close() error {
-	c.tcpConn.Close()
-	return c.udpConn.Close()
+	err1 := c.tcpConn.Close()
+	err2 := c.udpConn.Close()
+	if err1 != nil {
+		return err1
+	}
+	return err2
 }
 
 // LocalAddr 获取本地地址

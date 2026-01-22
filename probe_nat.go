@@ -103,7 +103,9 @@ func performTest(conn net.PacketConn, serverAddr string, network string, timeout
 		return nil, nil, err
 	}
 	txID := [12]byte{}
-	rand.Read(txID[:])
+	if _, err := rand.Read(txID[:]); err != nil {
+		return nil, nil, err
+	}
 	req := encodeSTUNRequest(txID, changeIP, changePort)
 	if _, err := conn.WriteTo(req, dst); err != nil {
 		return nil, nil, err
