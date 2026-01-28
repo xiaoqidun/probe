@@ -311,6 +311,8 @@ func DetectNAT(conn net.PacketConn, primarySTUN, secondarySTUN, network string, 
 			res.Type = NATRestricted
 		case FilteringAddressPortDependent:
 			res.Type = NATPortRestricted
+		default:
+			res.Type = NATUnknown
 		}
 	} else {
 		res.Type = NATSymmetric
