@@ -303,6 +303,8 @@ func DetectNAT(conn net.PacketConn, primarySTUN, secondarySTUN, network string, 
 		if res.Mapping == MappingUnknown {
 			res.Mapping = MappingEndpointIndependent
 		}
+	} else if res.Mapping == MappingUnknown {
+		res.Type = NATUnknown
 	} else if res.Mapping == MappingEndpointIndependent {
 		switch res.Filtering {
 		case FilteringAddressDependent:
